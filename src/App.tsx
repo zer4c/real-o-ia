@@ -6,6 +6,8 @@ import { loadModels, predictCNN, predictClustering, type LoadedModels, type Pred
 type Theme = 'dark' | 'light';
 type ImageSelection = PreparedImage & { file: File; url: string };
 type Result = { value: Prediction | null; error: string | null };
+// Presentation only: keep k-means available for restoring the comparison.
+const SHOW_KMEANS = false;
 const emptyResult = (): Result => ({ value: null, error: null });
 const percent = (n?: number) => n === undefined ? '—' : `${(n * 100).toFixed(1)} %`;
 const decimal = (n?: number) => n === undefined ? '—' : n.toFixed(3);
@@ -143,7 +145,7 @@ export default function App() {
   const agreement = cnn.value && kmeans.value ? cnn.value.label === kmeans.value.label : null;
   const agreementText = agreement === true ? 'Ambos modelos coinciden' : agreement === false ? 'Los modelos no coinciden'
     : preparing || cnnBusy || kmBusy ? 'Analizando la imagen' : selection ? 'Esperando ambos resultados' : 'Esperando una imagen';
-  const missing = models && (!models.cnn.value || !models.kmeans.value);
+  const missing = models && (!models.cnn.value || (SHOW_KMEANS && !models.kmeans.value));
 
   return <>
     <header className="topbar"><div className="topbar-inner">
@@ -184,17 +186,17 @@ export default function App() {
           </div>
         </div>
       </section>
-      <section className="comparison" aria-label="Comparación de modelos">
+      <section className="comparison" aria-label={SHOW_KMEANS ? 'Comparación de modelos' : 'Resultado de la red convolucional'}>
         <div className="section-rule" aria-hidden="true"><Icon name="arrow" /></div>
-        <div className="model-grid">
+        <div className={`model-grid${SHOW_KMEANS ? '' : ' single-model'}`}>
           <ModelColumn kind="cnn" result={cnn} metrics={models?.metrics.value ?? null} loading={!models} busy={cnnBusy} unavailable={!!models && !models.cnn.value} />
-          <ModelColumn kind="kmeans" result={kmeans} metrics={models?.metrics.value ?? null} loading={!models} busy={kmBusy} unavailable={!!models && !models.kmeans.value} />
+          {SHOW_KMEANS && <ModelColumn kind="kmeans" result={kmeans} metrics={models?.metrics.value ?? null} loading={!models} busy={kmBusy} unavailable={!!models && !models.kmeans.value} />}
         </div>
-        <div className={`agreement ${agreement === null ? '' : agreement ? 'matches' : 'differs'}`} role="status" aria-live="polite">
+        {SHOW_KMEANS && <div className={`agreement ${agreement === null ? '' : agreement ? 'matches' : 'differs'}`} role="status" aria-live="polite">
           <h2>Acuerdo entre modelos</h2><p>{agreementText}</p>
-        </div>
-        {!models ? <p className="resource-note" role="status">Cargando modelos…</p> : missing || !models.metrics.value ?
-          <p className="resource-note">{missing ? 'Los modelos aún no están disponibles.' : 'Las métricas aún no están disponibles.'} Coloca la exportación de Colab en <code>public/models/</code> y recarga la página.</p> : null}
+        </div>}
+        {!models ? <p className="resource-note" role="status">{SHOW_KMEANS ? 'Cargando modelos…' : 'Cargando modelo…'}</p> : missing || !models.metrics.value ?
+          <p className="resource-note">{missing ? (SHOW_KMEANS ? 'Los modelos aún no están disponibles.' : 'El modelo aún no está disponible.') : 'Las métricas aún no están disponibles.'} Coloca la exportación de Colab en <code>public/models/</code> y recarga la página.</p> : null}
       </section>
     </main>
   </>;
