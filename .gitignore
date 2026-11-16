@@ -1,0 +1,11 @@
+node_modules/
+dist/
+*.zip
+*.keras
+*.h5
+__pycache__/
+.impeccable/
+
+.pnpm-store/
+.pnpm-cache/
+*.tsbuildinfo
