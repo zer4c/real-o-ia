@@ -26,7 +26,7 @@ function Icon({ name, className = '' }: { name: 'image' | 'upload' | 'sun' | 'mo
 }
 
 function Metric({ name, value, title }: { name: string; value: string; title?: string }) {
-  return <div className="metric" title={title}><dt>{name}</dt><dd>{value}</dd></div>;
+  return <tr className="metric" title={title}><th scope="row">{name}</th><td>{value}</td></tr>;
 }
 
 function ModelColumn({ kind, result, metrics, loading, busy, unavailable }: {
@@ -37,19 +37,28 @@ function ModelColumn({ kind, result, metrics, loading, busy, unavailable }: {
   const modelMetrics = metrics?.[kind];
   const status = busy ? 'Analizando imagen…' : prediction ? (prediction.label === 'REAL' ? 'Real' : 'Generada por IA') : 'Sin predicción';
   return <article className={`model-column ${kind}`} aria-labelledby={`${kind}-heading`} aria-busy={busy}>
-    <header className="model-heading">
-      <h2 id={`${kind}-heading`}>{isCNN ? 'Red convolucional' : 'K-means'}</h2>
-      <span className="model-tag">{isCNN ? 'Supervisado' : 'No supervisado'}</span>
-    </header>
-    <p className={`prediction ${prediction ? prediction.label.toLowerCase() : 'pending'}`} aria-live="polite">{status}</p>
-    <dl className="metrics">
-      <Metric name="Accuracy" value={loading ? '…' : percent(modelMetrics?.accuracy)} title="Exactitud del modelo en el conjunto de test; no corresponde a esta imagen." />
-      <Metric name="F1" value={loading ? '…' : decimal(modelMetrics?.f1)} title="F1 de la clase FAKE en el conjunto de test." />
-      {isCNN ? <Metric name="Puntaje FAKE" value={percent(prediction?.score)} title="Salida de la CNN: un puntaje sin calibrar, con umbral de clasificación de 0.5." /> : <>
-        <Metric name="Grupo" value={prediction?.cluster === undefined ? '—' : `${prediction.cluster} · ${prediction.label}`} title="Nombre del grupo asociado a REAL/FAKE mediante las etiquetas de entrenamiento." />
-        <Metric name="Distancia" value={prediction?.distances ? decimal(prediction.distances[prediction.cluster!]) : '—'} title="Distancia euclídea al centroide asignado; no es una probabilidad." />
-      </>}
-    </dl>
+    <table className="model-table">
+      <thead><tr>
+        <td aria-hidden="true" />
+        <th scope="col" className="model-heading">
+          <h2 id={`${kind}-heading`}>{isCNN ? 'Red convolucional' : 'K-means'}</h2>
+          <span className="model-tag">{isCNN ? 'Supervisado' : 'No supervisado'}</span>
+        </th>
+      </tr></thead>
+      <tbody>
+        <tr className="prediction-row"><th scope="row">Predicción</th>
+          <td className={`prediction ${prediction ? prediction.label.toLowerCase() : 'pending'}`} aria-live="polite">{status}</td>
+        </tr>
+        <Metric name="Accuracy" value={loading ? '…' : percent(modelMetrics?.accuracy)} title="Exactitud del modelo en el conjunto de test; no corresponde a esta imagen." />
+        <Metric name="F1" value={loading ? '…' : decimal(modelMetrics?.f1)} title="F1 de la clase FAKE en el conjunto de test." />
+        <tr className="detail-row"><th scope="row">Detalle</th><td>
+          {isCNN ? <span title="Salida sin calibrar de la CNN; umbral de clasificación: 0.5.">Puntaje FAKE <span className="detail-value">{percent(prediction?.score)}</span></span> : <>
+            <span title="Grupo asociado a REAL/FAKE usando etiquetas de entrenamiento.">Grupo <span className="detail-value">{prediction?.cluster === undefined ? '—' : `${prediction.cluster} · ${prediction.label}`}</span></span>
+            <span title="Distancia euclídea al centroide; no es una probabilidad.">Distancia <span className="detail-value">{prediction?.distances ? decimal(prediction.distances[prediction.cluster!]) : '—'}</span></span>
+          </>}
+        </td></tr>
+      </tbody>
+    </table>
     {result.error && <p className="inline-error" role="alert">{result.error}</p>}
     {unavailable && !result.error && <p className="model-note">Modelo pendiente de cargar.</p>}
   </article>;
@@ -88,7 +97,7 @@ export default function App() {
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
-    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', theme === 'dark' ? '#191b18' : '#f6f4ee');
+    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', theme === 'dark' ? '#101614' : '#fafafa');
     try { localStorage.setItem('real-o-ia-theme', theme); } catch { /* Preference still applies for this session. */ }
   }, [theme]);
 
@@ -149,7 +158,6 @@ export default function App() {
 
   return <>
     <header className="topbar"><div className="topbar-inner">
-      <h1 className="wordmark">Real o <span>IA</span></h1>
       <button className="theme-toggle" type="button" onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
         aria-label={theme === 'dark' ? 'Activar modo claro' : 'Activar modo oscuro'} title={theme === 'dark' ? 'Activar modo claro' : 'Activar modo oscuro'}>
         <Icon name={theme === 'dark' ? 'sun' : 'moon'} />
@@ -187,7 +195,6 @@ export default function App() {
         </div>
       </section>
       <section className="comparison" aria-label={SHOW_KMEANS ? 'Comparación de modelos' : 'Resultado de la red convolucional'}>
-        <div className="section-rule" aria-hidden="true"><Icon name="arrow" /></div>
         <div className={`model-grid${SHOW_KMEANS ? '' : ' single-model'}`}>
           <ModelColumn kind="cnn" result={cnn} metrics={models?.metrics.value ?? null} loading={!models} busy={cnnBusy} unavailable={!!models && !models.cnn.value} />
           {SHOW_KMEANS && <ModelColumn kind="kmeans" result={kmeans} metrics={models?.metrics.value ?? null} loading={!models} busy={kmBusy} unavailable={!!models && !models.kmeans.value} />}
