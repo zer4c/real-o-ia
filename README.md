@@ -45,7 +45,7 @@ Se verificaron la compilación, las pruebas de características y la paridad num
 
 Accuracy y F1 son métricas del **test**, no de la imagen subida. F1 se calcula para FAKE. El puntaje FAKE de la CNN usa umbral 0.5 y no es una probabilidad calibrada. La distancia de k-means es euclídea al centroide asignado, después de escalar las 35 características manuales. Las etiquetas REAL/FAKE de los grupos se asociaron después del ajuste usando únicamente entrenamiento. La coincidencia entre modelos no demuestra autenticidad.
 
-La exportación recibida registra 78 961 imágenes de entrenamiento, 19 741 de validación y 20 000 de test. Accuracy: CNN **95,84 %**, k-means **52,685 %**. Son resultados de esa ejecución; k-means apenas supera el 50 % en este conjunto balanceado. No se promete detección general de generadores actuales: CIFAKE compara CIFAR-10 con imágenes de Stable Diffusion 1.4 a baja resolución.
+La exportación recibida registra 78 961 imágenes de entrenamiento, 19 741 de validación y 20 000 de test. Accuracy: CNN **96,275 %**, k-means **52,685 %**. Son resultados de esa ejecución; k-means apenas supera el 50 % en este conjunto balanceado. No se promete detección general de generadores actuales: CIFAKE compara CIFAR-10 con imágenes de Stable Diffusion 1.4 a baja resolución.
 
 El notebook conserva un representante por duplicado byte a byte del train oficial y excluye de entrenamiento archivos idénticos presentes en test, sin consultar etiquetas de test. Después realiza la partición estratificada train/validación. El test oficial permanece intacto. Los recuentos de limpieza están en `split_audit`; SHA-256 no detecta casi duplicados ni imágenes recodificadas.
 
